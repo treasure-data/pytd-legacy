@@ -1,0 +1,7 @@
+*.pyc
+.coverage
+.envrc
+docs/_build
+build
+dist
+tdlib.egg-info

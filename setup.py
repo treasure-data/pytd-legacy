@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+import re
+from setuptools import setup, find_packages
+
+def read_version():
+    with open("tdlib/version.py") as f:
+        m = re.match(r'__version__ = "([^\"]*)"', f.read())
+        return m.group(1)
+
+setup(
+    name="tdlib",
+    version=read_version(),
+    description="High-level abstraction for Treasure Data",
+    author="Keisuke Nishida",
+    author_email="keisuke.nishida@gmail.com",
+    url="https://github.com/k24d/tdlib",
+    install_requires=open("requirements.txt").read().splitlines(),
+    packages=find_packages(),
+    license="Apache License 2.0",
+    platforms="Posix; MacOS X; Windows",
+    classifiers=[
+        "Development Status :: 2 - Pre-Alpha",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: OS Independent",
+        "Topic :: Software Development",
+    ],
+)
