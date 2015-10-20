@@ -14,6 +14,7 @@ Contents:
    :maxdepth: 2
 
    namedquery
+   result_proxy
 
 Indices and tables
 ==================

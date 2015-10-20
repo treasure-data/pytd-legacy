@@ -2,24 +2,25 @@
 Named Query
 ===========
 
-"Named Query" is an abstraction of Treasure Data's saved queries (formerly known as "Scheduled Jobs").  You can create, run, and schedule queries using ``NamedQuery`` class.
+"Named Query" is an abstraction of Treasure Data's saved queries (formerly known as "scheduled jobs").  You can create, run, and schedule queries using ``NamedQuery`` class.
 
 Creating a Named Query
 ======================
 
-Create a ``NamedQuery`` object and ``save()`` it.  ``NamedQuery`` accepts the same parameters as ``td sched:create`` command.  (See `Scheduled Jobs (CLI) <http://docs.treasure-data.com/articles/schedule-cli>`_ for details.)
-
-::
+You can create a ``NamedQuery`` object by passing a context and query name.  Nothing happens just by creating a ``NamedQuery`` object.  You need to explicitly call ``save()`` method to save the query in the cloud::
 
   from tdlib import Context, NamedQuery
 
   ctx = Context()
 
+  # Create a query
   query = "select count(1) from www_access"
   q = NamedQuery(ctx, 'access_count', database='my_db', query=query)
   q.save()
 
-You will find your query by running ``td sched:list`` command::
+``NamedQuery`` accepts the same parameters as ``td sched:create`` command.  See `Scheduled Jobs (CLI) <http://docs.treasure-data.com/articles/schedule-cli>`_ for details.
+
+You can find your query by running ``td sched:list`` command::
 
   $ td sched:list
   +--------------+------+----------+---------------+-------+----------+--------+----------+---------------------------------+
@@ -29,7 +30,7 @@ You will find your query by running ``td sched:list`` command::
   +--------------+------+----------+---------------+-------+----------+--------+----------+---------------------------------+
   1 row in set
 
-You can update your query by recreating an object with the same name::
+``save()`` is a repeatable operation.  You can edit your query and save it again to update it as long as the query uses the same name::
 
   # Update a query
   query = "select count(1) from www_access where time > 1234567890"
@@ -39,7 +40,7 @@ You can update your query by recreating an object with the same name::
 Running a Query
 ===============
 
-You can run a query at any time you want, optionally with a specific time value.  This value is used by ``td_scheduled_time()`` UDF and is useful when you want to retry a failed query with past date::
+You can run a query at any time you want, optionally with a specific time value::
 
   import datetime
 
@@ -51,7 +52,9 @@ You can run a query at any time you want, optionally with a specific time value.
   time = datetime.datetime(2015, 1, 1, 0, 0, 0)
   q.run(time)
 
-Note: You don't need to call ``save()`` explicitly.  A query is always saved before you run it.
+The time value is used by ``td_scheduled_time()`` UDF.  See `examples <http://docs.treasuredata.com/articles/schedule#example-daily-kpis>`_ for how to use ``td_scheduled_time()``.
+
+Note: ``run()`` implicitly calls ``save()`` before running a query.  You don't need to call ``save()``.
 
 Templating a Query
 ==================
@@ -60,7 +63,7 @@ A query can be a `Jinja2 <http://jinja.pocoo.org/docs/dev/>`_ template, which al
 
   # Define query template with Jinja2
   query = '''
-  select count(*) cnt
+  select count(1) cnt
   from www_access
   where td_time_range(time, '{{start_time}}', '{{end_time}}')
   '''
@@ -76,44 +79,55 @@ A query can be a `Jinja2 <http://jinja.pocoo.org/docs/dev/>`_ template, which al
 
   # The query is rendered as follows:
   #
-  # select count(*) cnt
+  # select count(1) cnt
   # from www_access
   # where td_time_range(time, '2000-01-01', '2010-01-01')
 
-If you want to preview the query without running, use ``render()`` to get it rendered::
+If you want to preview the query before running it, use ``render()``::
 
   >>> print(q.render(variables))
-  select count(*) cnt
+  select count(1) cnt
   from www_access
   where td_time_range(time, '2000-01-01', '2010-01-01')
 
 Defining Query as Class
 =======================
 
-::
+You can define a query as a class by subclassing ``NamedQuery``::
 
   class AccessCount(tdlib.NamedQuery):
       name = 'access_count'
       database = 'my_db'
       type = 'presto'
-
-      query = '''
-      select count(*) cnt
-      from www_access
-      where td_time_range(time, '{{start_time}}', '{{end_time}}')
-      '''
+      query = "select count(1) cnt from www_access"
 
   # Create a query object
   q = AccessCount(ctx)
+  q.save()
 
-  # Run it as usual
-  time = datetime.datetime(2015, 1, 1, 0, 0, 0)
-  variables = {
-    'start_time': '2000-01-01',
-    'end_time': '2010-01-01',
-  }
-  q.run(time, variables)
+If you are familiar with Python, you can generate a query dynamically by defining ``query`` and other fields as properties of a class::
 
+  class DynamicAccessCount(tdlib.NamedQuery):
+      database = 'my_db'
+      type = 'presto'
+
+      # Initialize with a custom argument
+      def __init__(self, ctx, table):
+          # Don't forget to call super().__init__()
+          super().__init__(ctx)
+          self.table = table
+
+      @property
+      def name(self):
+          return "access_count.{0}".format(self.table)
+
+      @property
+      def query(self):
+          return "select count(1) cnt from {0}".format(self.table)
+
+  # This will create a query named "access_count.www_access"
+  q = DynamicAccessCount(ctx, 'www_access')
+  q.save()
 
 Deleting a Query
 ================

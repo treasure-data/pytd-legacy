@@ -6,6 +6,7 @@ import jinja2
 import logging
 logger = logging.getLogger(__name__)
 
+from .result import ResultProxy
 
 class NotFoundError(Exception): pass
 
@@ -51,11 +52,17 @@ class NamedQuery(object):
             return 'hive'
         return self._type
 
-    def save(self):
+    def render(self, variables=None):
+        if variables is None:
+            variables = {}
+        t = jinja2.Template(self.query)
+        return t.render(variables)
+
+    def save(self, variables=None):
         api = self.context.client.api
         params = {
             'database': self.database,
-            'query': self.query,
+            'query': self.render(variables),
             'type': self.type,
             'cron': self.cron,
         }
@@ -78,12 +85,9 @@ class NamedQuery(object):
     def run(self, time=None, variables=None):
         if time is None:
             time = datetime.datetime.now().replace(microsecond=0)
+        # save query before running
+        self.save(variables)
+        # run query
         api = self.context.client.api
-        for job_id, type, scheduled_at in api.run_schedule(name, time):
-            return job_id
-
-    def render(self, variables=None):
-        if variables is None:
-            variables = {}
-        t = jinja2.Template(self.query)
-        return t.render(variables)
+        for job_id, type, scheduled_at in api.run_schedule(self.name, time):
+            return ResultProxy(self.context, job_id)
