@@ -2,12 +2,12 @@
 Named Query
 ===========
 
-"Named Query" is an abstraction of Treasure Data's saved queries (formerly known as "scheduled jobs").  You can create, run, and schedule queries using ``NamedQuery`` class.
+"Named Query" is an abstraction of Treasure Data's saved queries (formerly known as "scheduled jobs").
 
 Creating a Named Query
 ======================
 
-You can create a ``NamedQuery`` object by passing a context and query name.  Nothing happens just by creating a ``NamedQuery`` object.  You need to explicitly call ``save()`` method to save the query in the cloud::
+You can create a ``NamedQuery`` object by passing a context and query name.  Nothing happens when you create a ``NamedQuery`` object.  You need to explicitly call ``save()`` to save the query in the cloud::
 
   from tdlib import Context, NamedQuery
 
@@ -30,7 +30,7 @@ You can find your query by running ``td sched:list`` command::
   +--------------+------+----------+---------------+-------+----------+--------+----------+---------------------------------+
   1 row in set
 
-``save()`` is a repeatable operation.  You can edit your query and save it again to update it as long as the query uses the same name::
+``save()`` is a repeatable operation as long as you use the same query name.  You can edit your query and save it again to update it::
 
   # Update a query
   query = "select count(1) from www_access where time > 1234567890"
@@ -40,7 +40,7 @@ You can find your query by running ``td sched:list`` command::
 Running a Query
 ===============
 
-You can run a query at any time you want, optionally with a specific time value::
+A query can be executed at any time, optionally with a specific time value::
 
   import datetime
 
@@ -54,12 +54,12 @@ You can run a query at any time you want, optionally with a specific time value:
 
 The time value is used by ``td_scheduled_time()`` UDF.  See `examples <http://docs.treasuredata.com/articles/schedule#example-daily-kpis>`_ for how to use ``td_scheduled_time()``.
 
-Note: ``run()`` implicitly calls ``save()`` before running a query.  You don't need to call ``save()``.
+Note: ``run()`` implicitly calls ``save()`` before running a query.
 
 Templating a Query
 ==================
 
-A query can be a `Jinja2 <http://jinja.pocoo.org/docs/dev/>`_ template, which allows you to substitute variables in the query::
+Query string can be a `Jinja2 <http://jinja.pocoo.org/docs/dev/>`_ template, which allows you to substitute variables in the query::
 
   # Define query template with Jinja2
   query = '''
