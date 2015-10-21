@@ -90,7 +90,7 @@ class NamedQuery(object):
         api = self.context.client.api
         api.delete_schedule(self.name)
 
-    def run(self, time=None, variables=None):
+    def run(self, time=None, variables=None, wait=False):
         if time is None:
             time = datetime.datetime.now().replace(microsecond=0)
         # save query before running
@@ -98,4 +98,7 @@ class NamedQuery(object):
         # run query
         api = self.context.client.api
         for job_id, type, scheduled_at in api.run_schedule(self.name, time):
-            return ResultProxy(self.context, job_id)
+            result = ResultProxy(self.context, job_id)
+            if wait:
+                result.wait()
+            return result
