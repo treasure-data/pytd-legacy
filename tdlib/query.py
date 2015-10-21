@@ -12,6 +12,8 @@ class NotFoundError(Exception): pass
 
 
 class NamedQuery(object):
+    source = None
+
     def __init__(self, context, name=None, cron=None, database=None, query=None, type=None):
         self.context = context
         self._name = name
@@ -52,11 +54,17 @@ class NamedQuery(object):
             return 'hive'
         return self._type
 
+    def get_template(self):
+        if self.source:
+            env = jinja2.Environment(loader=jinja2.PackageLoader(self.__module__, '.'))
+            return env.get_template(self.source)
+        else:
+            return jinja2.Template(self.query)
+
     def render(self, variables=None):
         if variables is None:
             variables = {}
-        t = jinja2.Template(self.query)
-        return t.render(variables)
+        return self.get_template().render(variables)
 
     def save(self, variables=None):
         api = self.context.client.api
