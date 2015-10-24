@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 class Context(object):
     '''High-level wrapper for tdclient.Client.'''
 
-    def __init__(self, apikey=None, endpoint=None, **kwargs):
+    def __init__(self, apikey=None, endpoint=None, template_loader=None):
+        # for td-client
+        kwargs = {}
         if apikey is not None:
             kwargs['apikey'] = apikey
         if endpoint is not None:
@@ -25,6 +27,11 @@ class Context(object):
             ]
             kwargs['user_agent'] = "tdlib/{0} ({1})".format(__version__, ' '.join(versions))
         self.client = tdclient.Client(**kwargs)
+        # for jinja2
+        if template_loader:
+            self.template_loader = template_loader
+        else:
+            self.template_loader = template_loader
 
     @property
     def apikey(self):

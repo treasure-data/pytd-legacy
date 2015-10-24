@@ -3,6 +3,8 @@ import datetime
 import tdclient
 import jinja2
 
+from six.moves import urllib
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -11,16 +13,101 @@ from .result import ResultProxy
 class NotFoundError(Exception): pass
 
 
-class NamedQuery(object):
-    source = None
+class Query(object):
+    def __init__(self, context, database=None, query=None, source=None, result=None, priority=None, retry=None, type=None, pool=None):
+        self.context = context
+        self._database = database
+        self._query = query
+        self._source = source
+        self._result = result
+        self._priority = priority
+        self._retry = retry
+        self._type = type
+        self._pool = pool
 
-    def __init__(self, context, name=None, cron=None, database=None, query=None, type=None):
+    @property
+    def database(self):
+        if self._database is None:
+            raise TypeError("missing parameter: 'database'")
+        return self._database
+
+    @property
+    def query(self):
+        if self._query is None:
+            raise TypeError("missing parameter: 'query'")
+        return self._query
+
+    @property
+    def source(self):
+        return self._source
+
+    @property
+    def result(self):
+        return self._result
+
+    @property
+    def priority(self):
+        return self._priority
+
+    @property
+    def retry(self):
+        return self._retry
+
+    @property
+    def type(self):
+        if self._type is None:
+            return 'hive'
+        return self._type
+
+    def get_template(self):
+        if self.source:
+            env = jinja2.Environment(loader=self.context.template_loader)
+            return env.get_template(self.source)
+        else:
+            return jinja2.Template(self.query)
+
+    def render(self, variables=None):
+        if variables is None:
+            variables = {}
+        return self.get_template().render(variables)
+
+    def get_params(self):
+        params = {
+            'type': self.type,
+            'db': self.database,
+        }
+        if self.result:
+            params['result_url'] = self.result
+        if self.priority:
+            params['priority'] = self.priority
+        if self.retry:
+            params['retry_limit'] = self.retry
+        return params
+
+    def run(self, variables=None, wait=False):
+        api = self.context.client.api
+        query = self.render(variables)
+        job_id = api.query(query, **self.get_params())
+        result = ResultProxy(self.context, job_id)
+        if wait:
+            result.wait()
+        return result
+
+
+class NamedQuery(Query):
+    def __init__(self, context, name=None, cron=None, database=None, query=None, source=None, result=None, priority=None, retry=None, type=None, timezone=None, delay=None):
         self.context = context
         self._name = name
         self._cron = cron
         self._database = database
         self._query = query
+        self._source = source
+        self._result = result
+        self._priority = priority
+        self._retry = retry
         self._type = type
+        self._timezone = timezone
+        self._delay = delay
 
     @property
     def name(self):
@@ -37,54 +124,49 @@ class NamedQuery(object):
         return self._cron
 
     @property
-    def database(self):
-        if self._database is None:
-            raise TypeError("missing parameter: 'database'")
-        return self._database
+    def timezone(self):
+        return self._timezone
 
     @property
-    def query(self):
-        if self._query is None:
-            raise TypeError("missing parameter: 'query'")
-        return self._query
+    def delay(self):
+        return self._delay
 
-    @property
-    def type(self):
-        if self._type is None:
-            return 'hive'
-        return self._type
+    def get_params(self):
+        params = {
+            'cron': self.cron,
+            'database': self.database,
+            'type': self.type,
+        }
+        if self.result:
+            params['result_url'] = self.result
+        if self.priority:
+            params['priority'] = self.priority
+        if self.retry:
+            params['retry_limit'] = self.retry
+        if self.timezone:
+            params['timezone'] = self.timezone
+        if self.delay:
+            params['delay'] = self.delay
+        return params
 
-    def get_template(self):
-        if self.source:
-            env = jinja2.Environment(loader=jinja2.PackageLoader(self.__module__, '.'))
-            return env.get_template(self.source)
-        else:
-            return jinja2.Template(self.query)
-
-    def render(self, variables=None):
-        if variables is None:
-            variables = {}
-        return self.get_template().render(variables)
+    def create_schedule(self, name, params=None):
+        api = self.context.client.api
+        # copied from td-client-python
+        params = {} if params is None else params
+        params.update({"type": params.get("type", "hive")})
+        with api.post("/v3/schedule/create/%s" % (urllib.parse.quote(str(name))), params) as res:
+            code, body = res.status, res.read()
+            if code != 200:
+                api.raise_error("Create schedule failed", res, body)
 
     def save(self, variables=None):
         api = self.context.client.api
-        params = {
-            'database': self.database,
-            'query': self.render(variables),
-            'type': self.type,
-            'cron': self.cron,
-        }
+        params = self.get_params()
+        params['query'] = self.render(variables)
         try:
             api.update_schedule(self.name, params)
         except tdclient.api.NotFoundError:
-            api.create_schedule(self.name, params)
-
-    def rename(self, newname):
-        api = self.context.client.api
-        params = {
-            'newname': newname,
-        }
-        api.update_schedule(self.name, params)
+            self.create_schedule(self.name, params)
 
     def delete(self):
         api = self.context.client.api
