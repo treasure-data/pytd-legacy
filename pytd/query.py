@@ -6,10 +6,11 @@ import six
 
 from six.moves import urllib
 
+from .result import ResultProxy
+
 import logging
 logger = logging.getLogger(__name__)
 
-from .result import ResultProxy
 
 class NotFoundError(Exception): pass
 
