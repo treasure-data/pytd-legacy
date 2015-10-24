@@ -3,7 +3,7 @@ import sys
 import tdclient
 import tdclient.version
 
-from tdlib.version import __version__
+from .version import __version__
 
 import logging
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class Context(object):
                 "tdclient/{0}".format(tdclient.version.__version__),
                 "Python/{0}.{1}.{2}.{3}.{4}".format(*list(sys.version_info)),
             ]
-            kwargs['user_agent'] = "tdlib/{0} ({1})".format(__version__, ' '.join(versions))
+            kwargs['user_agent'] = "pytd/{0} ({1})".format(__version__, ' '.join(versions))
         self.client = tdclient.Client(**kwargs)
         # for jinja2
         if template_loader:

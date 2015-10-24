@@ -7,7 +7,7 @@ import os
 
 from six.moves import urllib
 
-from tdlib.version import __version__
+from .version import __version__
 
 def http_get(uri, **kwargs):
     return requests.get(uri, **kwargs)
@@ -46,7 +46,7 @@ class ResultProxy(object):
         headers = {
             'Authorization': 'TD1 {0}'.format(self.context.apikey),
             'Accept-Encoding': 'deflate, gzip',
-            'User-Agent': "tdlib/{0} ({1})".format(__version__, requests.utils.default_user_agent()),
+            'User-Agent': "pytd/{0} ({1})".format(__version__, requests.utils.default_user_agent()),
         }
         r = http_get('{endpoint}v3/job/result/{job_id}?format={format}'.format(
             endpoint = self.context.endpoint,

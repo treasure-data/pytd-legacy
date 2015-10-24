@@ -4,17 +4,17 @@ import re
 from setuptools import setup, find_packages
 
 def read_version():
-    with open("tdlib/version.py") as f:
+    with open("pytd/version.py") as f:
         m = re.match(r'__version__ = "([^\"]*)"', f.read())
         return m.group(1)
 
 setup(
-    name="tdlib",
+    name="pytd",
     version=read_version(),
     description="High-level abstraction for Treasure Data",
     author="Keisuke Nishida",
     author_email="keisuke.nishida@gmail.com",
-    url="https://github.com/k24d/tdlib",
+    url="https://github.com/k24d/pytd",
     install_requires=open("requirements.txt").read().splitlines(),
     packages=find_packages(),
     license="Apache License 2.0",
