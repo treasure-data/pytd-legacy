@@ -138,7 +138,7 @@ class NamedQuery(Query):
             'type': self.type,
         }
         if self.result:
-            params['result_url'] = self.result
+            params['result'] = self.result
         if self.priority:
             params['priority'] = self.priority
         if self.retry:
@@ -164,6 +164,7 @@ class NamedQuery(Query):
         params = self.get_params()
         params['query'] = self.render(variables)
         try:
+            print(params)
             api.update_schedule(self.name, params)
         except tdclient.api.NotFoundError:
             self.create_schedule(self.name, params)
