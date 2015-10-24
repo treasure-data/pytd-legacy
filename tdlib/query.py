@@ -2,6 +2,7 @@
 import datetime
 import tdclient
 import jinja2
+import six
 
 from six.moves import urllib
 
@@ -69,7 +70,17 @@ class Query(object):
     def render(self, variables=None):
         if variables is None:
             variables = {}
+        if not isinstance(variables, dict):
+            raise TypeError('dict-like object is expected: {0}'.format(variables))
         return self.get_template().render(variables)
+
+    def get_result_url(self):
+        obj = self.result
+        if isinstance(obj, six.string_types):
+            return obj
+        if obj:
+            return obj.get_result_url()
+        return None
 
     def get_params(self):
         params = {
@@ -77,7 +88,7 @@ class Query(object):
             'db': self.database,
         }
         if self.result:
-            params['result_url'] = self.result
+            params['result_url'] = self.get_result_url()
         if self.priority:
             params['priority'] = self.priority
         if self.retry:
@@ -138,7 +149,7 @@ class NamedQuery(Query):
             'type': self.type,
         }
         if self.result:
-            params['result'] = self.result
+            params['result'] = self.get_result_url()
         if self.priority:
             params['priority'] = self.priority
         if self.retry:
@@ -164,7 +175,6 @@ class NamedQuery(Query):
         params = self.get_params()
         params['query'] = self.render(variables)
         try:
-            print(params)
             api.update_schedule(self.name, params)
         except tdclient.api.NotFoundError:
             self.create_schedule(self.name, params)
@@ -173,14 +183,14 @@ class NamedQuery(Query):
         api = self.context.client.api
         api.delete_schedule(self.name)
 
-    def run(self, time=None, variables=None, wait=False):
-        if time is None:
-            time = datetime.datetime.now().replace(microsecond=0)
+    def run(self, variables=None, wait=False, scheduled_time=None):
+        if scheduled_time is None:
+            scheduled_time = datetime.datetime.now().replace(microsecond=0)
         # save query before running
         self.save(variables)
         # run query
         api = self.context.client.api
-        for job_id, type, scheduled_at in api.run_schedule(self.name, time):
+        for job_id, type, scheduled_at in api.run_schedule(self.name, scheduled_time):
             result = ResultProxy(self.context, job_id)
             if wait:
                 result.wait()
