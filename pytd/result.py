@@ -114,6 +114,62 @@ class S3ResultOutput(ResultOutput):
         return "s3://{aws_access_key_id}:{aws_secret_access_key}@/{bucket}/{path}?{params}".format(**reqs)
 
 
+class PostgreSQLResultOutput(ResultOutput):
+    def __init__(self, hostname=None, port=5432, username=None, password=None, database=None, schema='public', table=None, ssl=False, mode='append', unique=None, method='insert'):
+        self.hostname = hostname
+        self.port = port
+        self.username = username
+        self.password = password
+        self.database = database
+        self.schema = schema
+        self.table = table
+        self.ssl = ssl
+        self.mode = mode
+        self.unique = unique
+        self.method = method
+
+    def get_result_url(self):
+        reqs = {}
+        for name in ['hostname', 'port', 'username', 'password', 'database', 'table']:
+            if getattr(self, name) is None:
+                raise TypeError('missing parameter "{0}" for {1}'.format(name, self))
+            reqs[name] = urllib.parse.quote(getattr(self, name))
+        params = {
+            'schema': self.schema,
+            'ssl': self.ssl,
+            'mode': self.mode,
+            'unique': self.unique,
+            'method': self.method,
+        }
+        reqs['params'] = urllib.parse.urlencode({key: params[key] for key in params if params[key]})
+        return "postgresql://{username}:{password}@{hostname}:{port}/{database}/{table}?{params}".format(**reqs)
+
+
+class DatatankResultOutput(ResultOutput):
+    def __init__(self, name='datatank', schema='public', table=None, mode='append', unique=None, method='copy'):
+        self.name = name
+        self.schema = schema
+        self.table = table
+        self.mode = mode
+        self.unique = unique
+        self.method = method
+
+    def get_result_url(self):
+        reqs = {}
+        for name in ['name', 'table']:
+            if getattr(self, name) is None:
+                raise TypeError('missing parameter "{0}" for {1}'.format(name, self))
+            reqs[name] = urllib.parse.quote(getattr(self, name))
+        params = {
+            'schema': self.schema,
+            'mode': self.mode,
+            'unique': self.unique,
+            'method': self.method,
+        }
+        reqs['params'] = urllib.parse.urlencode({key: params[key] for key in params if params[key]})
+        return "{name}:{table}?{params}".format(**reqs)
+
+
 class TableauServerResultOutput(ResultOutput):
     def __init__(self, server, server_version, datasource, username=None, password=None, ssl='true', ssl_verify='true', site=None, project=None, mode='replace'):
         self.server = server
