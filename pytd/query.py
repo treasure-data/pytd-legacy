@@ -96,15 +96,23 @@ class Query(object):
             params['retry_limit'] = self.retry
         return params
 
+    def get_result(self, job_id, wait=False):
+        result = ResultProxy(self.context, job_id)
+        if wait:
+            result.wait()
+            status = result.status()
+            if status != 'success':
+                debug = result.job.debug
+                if debug and debug['stderr']:
+                    logger.error(debug['stderr'])
+                raise RuntimeError("job {0} {1}".format(job_id, status))
+        return result
+
     def run(self, variables=None, wait=False):
         api = self.context.client.api
         query = self.render(variables)
         job_id = api.query(query, **self.get_params())
-        result = ResultProxy(self.context, job_id)
-        if wait:
-            result.wait()
-        return result
-
+        return self.get_result(job_id, wait=wait)
 
 class NamedQuery(Query):
     def __init__(self, context, name=None, cron=None, database=None, query=None, source=None, result=None, priority=None, retry=None, type=None, timezone=None, delay=None):
@@ -192,7 +200,4 @@ class NamedQuery(Query):
         # run query
         api = self.context.client.api
         for job_id, type, scheduled_at in api.run_schedule(self.name, scheduled_time):
-            result = ResultProxy(self.context, job_id)
-            if wait:
-                result.wait()
-            return result
+            return self.get_result(job_id, wait=wait)
