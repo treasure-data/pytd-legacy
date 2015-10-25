@@ -96,7 +96,7 @@ class Query(object):
             params['retry_limit'] = self.retry
         return params
 
-    def get_result(self, job_id, wait=False):
+    def get_result(self, job_id, wait=True):
         result = ResultProxy(self.context, job_id)
         if wait:
             result.wait()
@@ -108,11 +108,12 @@ class Query(object):
                 raise RuntimeError("job {0} {1}".format(job_id, status))
         return result
 
-    def run(self, variables=None, wait=False):
+    def run(self, variables=None, wait=True):
         api = self.context.client.api
         query = self.render(variables)
         job_id = api.query(query, **self.get_params())
         return self.get_result(job_id, wait=wait)
+
 
 class NamedQuery(Query):
     def __init__(self, context, name=None, cron=None, database=None, query=None, source=None, result=None, priority=None, retry=None, type=None, timezone=None, delay=None):
@@ -194,9 +195,9 @@ class NamedQuery(Query):
         api = self.context.client.api
         api.delete_schedule(self.name)
 
-    def run(self, variables=None, wait=False, scheduled_time=None):
+    def run(self, variables=None, scheduled_time=None, wait=True):
         if scheduled_time is None:
-            scheduled_time = datetime.datetime.now().replace(microsecond=0)
+            scheduled_time = datetime.datetime.utcnow().replace(microsecond=0)
         # save query before running
         self.save(variables)
         # run query
