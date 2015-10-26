@@ -3,18 +3,24 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-tdlib documentation
+PyTD Documentation
 ===================
 
-High-level abstraction for `Treasure Data <http://www.treasuredta.com/>`_.
-
-Contents:
+Python wrappers for `Treasure Data <http://www.treasuredta.com/>`_.
 
 .. toctree::
-   :maxdepth: 2
+   :caption: Basic Components
+   :maxdepth: 1
 
    namedquery
    result_proxy
+
+.. toctree::
+   :caption: Data Frames
+   :maxdepth: 1
+
+   pandas
+   spark
 
 Indices and tables
 ==================

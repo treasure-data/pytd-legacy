@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# tdlib documentation build configuration file, created by
+# pytd documentation build configuration file, created by
 # sphinx-quickstart on Sun Oct 18 17:28:11 2015.
 #
 # This file is execfile()d with the current directory set to its
@@ -47,7 +47,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'tdlib'
+project = 'pytd'
 copyright = '2015, Keisuke Nishida'
 author = 'Keisuke Nishida'
 
@@ -201,7 +201,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'tdlibdoc'
+htmlhelp_basename = 'pytddoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -223,7 +223,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'tdlib.tex', 'tdlib Documentation',
+  (master_doc, 'pytd.tex', 'PyTD Documentation',
    'Keisuke Nishida', 'manual'),
 ]
 
@@ -253,7 +253,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'tdlib', 'tdlib Documentation',
+    (master_doc, 'pytd', 'PyTD Documentation',
      [author], 1)
 ]
 
@@ -267,8 +267,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'tdlib', 'tdlib Documentation',
-   author, 'tdlib', 'One line description of project.',
+  (master_doc, 'pytd', 'PyTD Documentation',
+   author, 'pytd', 'One line description of project.',
    'Miscellaneous'),
 ]
 
