@@ -1,5 +1,5 @@
 import sys
-
+import jinja2
 import tdclient
 import tdclient.version
 
@@ -11,8 +11,23 @@ logger = logging.getLogger(__name__)
 class Context(object):
     '''High-level wrapper for tdclient.Client.'''
 
-    def __init__(self, apikey=None, endpoint=None, template_loader=None):
-        # for td-client
+    def __init__(self, module=None, config=None):
+        if config is None:
+            config = {}
+        self.module = module
+
+        # tdclient
+        self.client = self.get_client(apikey=config.get('apikey'), endpoint=config.get('endpoint'))
+
+        # jinja2
+        if 'template_loader' in config:
+            self.template_loader = config['template_loader']
+        elif self.module:
+            self.template_loader = jinja2.PackageLoader(self.module, 'templates')
+        else:
+            self.template_loader = jinja2.FileSystemLoader('templates')
+
+    def get_client(self, apikey=None, endpoint=None):
         kwargs = {}
         if apikey is not None:
             kwargs['apikey'] = apikey
@@ -26,12 +41,7 @@ class Context(object):
                 "Python/{0}.{1}.{2}.{3}.{4}".format(*list(sys.version_info)),
             ]
             kwargs['user_agent'] = "pytd/{0} ({1})".format(__version__, ' '.join(versions))
-        self.client = tdclient.Client(**kwargs)
-        # for jinja2
-        if template_loader:
-            self.template_loader = template_loader
-        else:
-            self.template_loader = template_loader
+        return tdclient.Client(**kwargs)
 
     @property
     def apikey(self):

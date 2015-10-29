@@ -133,9 +133,9 @@ class NamedQuery(Query):
     @property
     def name(self):
         if self._name is None:
-            if self.__class__ == NamedQuery:
+            if self.__class__ is NamedQuery:
                 raise TypeError("missing parameter: 'name'")
-            return "{0}.{1}".format(self.__class__.__module__, self.__class__.__name__)
+            return "{0}.{1}".format(self.context.module, self.__class__.__name__)
         return self._name
 
     @property
