@@ -185,8 +185,7 @@ class NamedQuery(Query):
         params = self.get_params()
         params['query'] = self.render(variables)
         try:
-            # FIXME: a workaround to avoid an issue of updating "result" (CLT-799)
-            del params['result']
+            # FIXME: doesn't work when updating "result" (CLT-799)
             api.update_schedule(self.name, params)
         except tdclient.api.NotFoundError:
             self.create_schedule(self.name, params)
