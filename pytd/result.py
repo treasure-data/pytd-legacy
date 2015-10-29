@@ -74,10 +74,8 @@ class ResultProxy(object):
             return ''
 
     def __iter__(self):
-        # NOTE: Defined as a generator because Pandas DataFrame
-        # does not support iterators as data.
-        # NOTE: msgpack.Unpacker uses self.read as input here.
-        # It does not support iterators unfortunately.
+        # NOTE: Defined as a generator because Pandas DataFrame does not support iterators as data.
+        # NOTE: msgpack.Unpacker uses self.read as input here because it does not support iterators.
         for row in msgpack.Unpacker(self, encoding='utf-8'):
             yield row
 
@@ -133,7 +131,7 @@ class PostgreSQLResultOutput(ResultOutput):
         for name in ['hostname', 'port', 'username', 'password', 'database', 'table']:
             if getattr(self, name) is None:
                 raise TypeError('missing parameter "{0}" for {1}'.format(name, self))
-            reqs[name] = urllib.parse.quote(getattr(self, name))
+            reqs[name] = urllib.parse.quote(str(getattr(self, name)))
         params = {
             'schema': self.schema,
             'ssl': self.ssl,
