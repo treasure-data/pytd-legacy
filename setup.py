@@ -11,7 +11,7 @@ def read_version():
 setup(
     name="pytd",
     version=read_version(),
-    description="Python wrappers for Treasure Data",
+    description="Python wrappers for TD",
     author="Keisuke Nishida",
     author_email="keisuke.nishida@gmail.com",
     url="https://github.com/k24d/pytd",
