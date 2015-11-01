@@ -99,7 +99,12 @@ class Query(object):
     def get_result(self, job_id, wait=True):
         result = ResultProxy(self.context, job_id)
         if wait:
-            result.wait()
+            try:
+                result.wait()
+            except KeyboardInterrupt:
+                self.context.client.api.kill(job_id)
+                logger.error("job %s killed", job_id)
+                raise
             status = result.status()
             if status != 'success':
                 debug = result.job.debug

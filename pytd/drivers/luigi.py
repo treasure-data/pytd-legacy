@@ -18,7 +18,12 @@ class QueryTask(luigi.Task):
     def run(self):
         result = self.run_query()
         logger.info("%s: td.job.url: %s", self, result.job.url)
-        result.wait()
+        try:
+            result.wait()
+        except KeyboardInterrupt:
+            result.job.kill()
+            logger.error("%s: job %s killed", self, result.job_id)
+            raise
         status = result.status()
         if status != 'success':
             debug = result.job.debug
