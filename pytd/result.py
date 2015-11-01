@@ -85,6 +85,27 @@ class ResultOutput(object):
         raise NotImplemented()
 
 
+class TreasureDataResultOutput(object):
+    def __init__(self, database, table, apikey='', hostname='', mode='append'):
+        self.database = database
+        self.table = table
+        self.apikey = apikey
+        self.hostname = hostname
+        self.mode = mode
+
+    def get_result_url(self):
+        reqs = {}
+        for name in ['database', 'table', 'apikey', 'hostname']:
+            if getattr(self, name) is None:
+                raise TypeError('missing parameter "{0}" for {1}'.format(name, self))
+            reqs[name] = urllib.parse.quote(getattr(self, name))
+        params = {
+            'mode': self.mode
+        }
+        reqs['params'] = urllib.parse.urlencode({key: params[key] for key in params if params[key]})
+        return "td://{apikey}@{hostname}/{database}/{table}?{params}".format(**reqs)
+
+
 class S3ResultOutput(ResultOutput):
     def __init__(self, bucket, path, aws_access_key_id=None, aws_secret_access_key=None, format='tsv', delimiter=None, quote=None, escape=None, null=None, newline=None, header=None):
         self.bucket = self.bucket

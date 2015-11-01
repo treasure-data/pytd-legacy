@@ -3,6 +3,7 @@ from .query import Query
 from .query import NamedQuery
 from .result import ResultProxy
 from .result import ResultOutput
+from .result import TreasureDataResultOutput
 from .result import S3ResultOutput
 from .result import PostgreSQLResultOutput
 from .result import DatatankResultOutput
