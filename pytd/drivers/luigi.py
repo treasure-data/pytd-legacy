@@ -8,7 +8,7 @@ logger = logging.getLogger('luigi-interface')
 class QueryTask(luigi.Task):
     def get_output_path(self, context, date=None):
         if date:
-            return os.path.join('tmp', self.date.strftime("%Y-%m-%d"), context.module, str(self))
+            return os.path.join('tmp', date.strftime("%Y-%m-%d"), context.module, str(self))
         else:
             return os.path.join('tmp', context.module, str(self))
 
