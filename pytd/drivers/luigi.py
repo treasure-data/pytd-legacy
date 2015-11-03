@@ -12,15 +12,16 @@ class QueryTask(luigi.Task):
         else:
             return os.path.join('tmp', context.module, str(self))
 
-    def run_query(self):
+    def query(self):
         raise NotImplemented()
 
     def run(self):
-        result = self.run_query()
+        result = self.query().run(wait=False)
         logger.info("%s: td.job.url: %s", self, result.job.url)
         try:
             result.wait()
         except KeyboardInterrupt:
+            logger.info("%s: killing running job %s", self, result.job_id)
             result.job.kill()
             logger.error("%s: job %s killed", self, result.job_id)
             raise

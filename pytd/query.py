@@ -16,11 +16,12 @@ class NotFoundError(Exception): pass
 
 
 class Query(object):
-    def __init__(self, context, database=None, query=None, source=None, result=None, priority=None, retry=None, type=None, pool=None):
+    def __init__(self, context, database=None, query=None, source=None, variables=None, result=None, priority=None, retry=None, type=None, pool=None):
         self.context = context
         self._database = database
         self._query = query
         self._source = source
+        self._variables = variables or {}
         self._result = result
         self._priority = priority
         self._retry = retry
@@ -42,6 +43,10 @@ class Query(object):
     @property
     def source(self):
         return self._source
+
+    @property
+    def variables(self):
+        return self._variables
 
     @property
     def result(self):
@@ -68,12 +73,10 @@ class Query(object):
         else:
             return jinja2.Template(self.query)
 
-    def render(self, variables=None):
-        if variables is None:
-            variables = {}
-        if not isinstance(variables, dict):
-            raise TypeError('dict-like object is expected: {0}'.format(variables))
-        return self.get_template().render(variables)
+    def render(self):
+        if not isinstance(self.variables, dict):
+            raise TypeError('dict-like object is expected: {0}'.format(self.variables))
+        return self.get_template().render(self.variables)
 
     def get_result_url(self):
         obj = self.result
@@ -113,10 +116,9 @@ class Query(object):
                 raise RuntimeError("job {0} {1}".format(job_id, status))
         return result
 
-    def run(self, variables=None, wait=True):
+    def run(self, wait=True):
         api = self.context.client.api
-        query = self.render(variables)
-        job_id = api.query(query, **self.get_params())
+        job_id = api.query(self.render(), **self.get_params())
         return self.get_result(job_id, wait=wait)
 
 
@@ -185,10 +187,10 @@ class NamedQuery(Query):
             if code != 200:
                 api.raise_error("Create schedule failed", res, body)
 
-    def save(self, variables=None):
+    def save(self):
         api = self.context.client.api
         params = self.get_params()
-        params['query'] = self.render(variables)
+        params['query'] = self.render()
         try:
             # FIXME: doesn't work when updating "result" (CLT-799)
             api.update_schedule(self.name, params)
@@ -199,11 +201,11 @@ class NamedQuery(Query):
         api = self.context.client.api
         api.delete_schedule(self.name)
 
-    def run(self, variables=None, scheduled_time=None, wait=True):
+    def run(self, scheduled_time=None, wait=True):
         if scheduled_time is None:
             scheduled_time = datetime.datetime.utcnow().replace(microsecond=0)
         # save query before running
-        self.save(variables)
+        self.save()
         # run query
         api = self.context.client.api
         for job_id, type, scheduled_at in api.run_schedule(self.name, scheduled_time):
