@@ -1,4 +1,5 @@
 from .context import Context
+from .table import Table
 from .query import Query
 from .query import NamedQuery
 from .result import ResultProxy
