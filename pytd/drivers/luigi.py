@@ -15,16 +15,23 @@ class QueryTask(luigi.Task):
     def query(self):
         raise NotImplemented()
 
-    def run(self):
-        result = self.query().run(wait=False)
-        logger.info("%s: td.job.url: %s", self, result.job.url)
+    def graceful_wait(self, result, stopping=False):
         try:
             result.wait()
         except KeyboardInterrupt:
-            logger.info("%s: killing running job %s", self, result.job_id)
-            result.job.kill()
-            logger.error("%s: job %s killed", self, result.job_id)
-            raise
+            if stopping:
+                logger.warning("%s: killing running job %s", self, result.job_id)
+                result.job.kill()
+                raise
+            else:
+                logger.warning("%s: waiting job %s to finish", self, result.job_id)
+                logger.warning("%s: press Control-C to kill the running job", self)
+                self.graceful_wait(result, stopping=True)
+
+    def run(self):
+        result = self.query().run(wait=False)
+        logger.info("%s: td.job.url: %s", self, result.job.url)
+        self.graceful_wait(result)
         status = result.status()
         if status != 'success':
             debug = result.job.debug
