@@ -7,10 +7,13 @@ logger = logging.getLogger('luigi-interface')
 
 class QueryTask(luigi.Task):
     def get_output_path(self, context, date=None):
+        args = ['tmp']
         if date:
-            return os.path.join('tmp', date.strftime("%Y-%m-%d"), context.module, str(self))
-        else:
-            return os.path.join('tmp', context.module, str(self))
+            args.append(date.strftime("%Y-%m-%d"))
+        if context.module:
+            args.append(context.module)
+        args.append(str(self))
+        return os.path.join(*args)
 
     def query(self):
         raise NotImplemented()
