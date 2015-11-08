@@ -121,6 +121,9 @@ class Query(object):
         job_id = api.query(self.render(), **self.get_params())
         return self.get_result(job_id, wait=wait)
 
+    def __call__(self, *args, **kwargs):
+        return self.run(*args, **kwargs)
+
 
 class NamedQuery(Query):
     def __init__(self, context, name=None, cron=None, database=None, query=None, source=None, result=None, priority=None, retry=None, type=None, timezone=None, delay=None):
@@ -210,3 +213,6 @@ class NamedQuery(Query):
         api = self.context.client.api
         for job_id, type, scheduled_at in api.run_schedule(self.name, scheduled_time):
             return self.get_result(job_id, wait=wait)
+
+    def __call__(self, *args, **kwargs):
+        return self.run(*args, **kwargs)
