@@ -1,4 +1,6 @@
+import calendar
 import contextlib
+import datetime
 import gzip
 import io
 import time
@@ -55,10 +57,10 @@ class Table(object):
     MODE_WRITE = 'w'
     MODE_APPEND = 'a'
 
-    def __init__(self, context, name):
+    def __init__(self, context, database_name, table_name):
         self.context = context
-        self.name = name
-        self.database_name, self.table_name = name.split('.')
+        self.database_name = database_name
+        self.table_name = table_name
         self.mode = None
 
     def _ensure_exists(self):
@@ -91,3 +93,17 @@ class Table(object):
             session.upload_frame(data)
         else:
             raise TypeError('unsupported data: {0}'.format(data))
+
+    def to_unixtime(self, time):
+        if type(time) is datetime.date:
+            dt = datetime.datetime.combine(time, datetime.datetime.min.time())
+        else:
+            dt = time
+        return calendar.timegm(dt.utctimetuple())
+
+    def partial_delete(self, start_time, end_time):
+        to_ = self.to_unixtime(end_time)
+        from_ = self.to_unixtime(start_time)
+        # FIXME: ensure retry on error
+        job = self.context.client.partial_delete(self.database_name, self.table_name, to_, from_)
+        job.wait()
