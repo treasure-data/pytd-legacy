@@ -50,3 +50,7 @@ class Context(object):
     @property
     def endpoint(self):
         return self.client.api.endpoint
+
+    def query(self, *args, **kwargs):
+        from pytd.query import Query
+        return Query(self, *args, **kwargs)
