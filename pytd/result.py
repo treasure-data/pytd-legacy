@@ -189,6 +189,30 @@ class DatatankResultOutput(ResultOutput):
         return "{name}:{table}?{params}".format(**reqs)
 
 
+class SalesforceResultOutput(ResultOutput):
+    def __init__(self, object_name, username=None, password=None, security_token=None, hostname='login.salesforce.com', mode='append', **kwargs):
+        self.object_name = object_name
+        self.username = username
+        self.password = password
+        self.security_token = security_token
+        self.hostname = hostname
+        self.mode = mode
+        self.kwargs = kwargs
+
+    def get_result_url(self):
+        reqs = {}
+        for name in ['username', 'password', 'security_token', 'hostname', 'object_name']:
+            if getattr(self, name) is None:
+                raise TypeError('missing parameter "{0}" for {1}'.format(name, self))
+            reqs[name] = urllib.parse.quote(getattr(self, name))
+        params = {
+            'mode': self.mode,
+        }
+        params.update(self.kwargs)
+        reqs['params'] = urllib.parse.urlencode({key: params[key] for key in params if params[key]})
+        return "sfdc://{username}:{password}{security_token}@{hostname}/{object_name}?{params}".format(**reqs)
+
+
 class TableauServerResultOutput(ResultOutput):
     def __init__(self, server, server_version, datasource, username=None, password=None, ssl='true', ssl_verify='true', site=None, project=None, mode='replace'):
         self.server = server

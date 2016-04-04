@@ -8,5 +8,6 @@ from .result import TreasureDataResultOutput
 from .result import S3ResultOutput
 from .result import PostgreSQLResultOutput
 from .result import DatatankResultOutput
+from .result import SalesforceResultOutput
 from .result import TableauServerResultOutput
 from .result import TableauOnlineResultOutput
