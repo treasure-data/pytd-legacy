@@ -133,6 +133,39 @@ class S3ResultOutput(ResultOutput):
         return "s3://{aws_access_key_id}:{aws_secret_access_key}@/{bucket}/{path}?{params}".format(**reqs)
 
 
+class MySQLResultOutput(ResultOutput):
+    def __init__(self, hostname=None, port=3306, username=None, password=None, database=None, table=None, ssl=False, ssl_verify=False, mode='append', unique=None, useCompression=True):
+        self.hostname = hostname
+        self.port = port
+        self.username = username
+        self.password = password
+        self.database = database
+        self.table = table
+        self.ssl = ssl
+        self.ssl_verify = ssl_verify
+        self.mode = mode
+        self.unique = unique
+        self.useCompression = useCompression
+
+    def get_result_url(self):
+        reqs = {}
+        for name in ['hostname', 'port', 'username', 'password', 'database', 'table']:
+            if getattr(self, name) is None:
+                raise TypeError('missing parameter "{0}" for {1}'.format(name, self))
+            reqs[name] = urllib.parse.quote(str(getattr(self, name)))
+        params = {
+            'ssl': 'true' if self.ssl else 'false',
+            'mode': self.mode,
+            'useCompression': 'true' if self.useCompression else 'false',
+        }
+        if self.mode == 'update':
+            params['unique'] = self.unique
+        if self.ssl:
+            params['ssl_verify'] = 'true' if self.ssl_verify else 'false'
+        reqs['params'] = urllib.parse.urlencode({key: params[key] for key in params if params[key]})
+        return "mysql://{username}:{password}@{hostname}:{port}/{database}/{table}?{params}".format(**reqs)
+
+
 class PostgreSQLResultOutput(ResultOutput):
     def __init__(self, hostname=None, port=5432, username=None, password=None, database=None, schema='public', table=None, ssl=False, mode='append', unique=None, method='insert'):
         self.hostname = hostname
